@@ -83,10 +83,42 @@ module powerbi.extensibility.visual {
         private dataPassedFlag: boolean;
         private host: IVisualHost;
 
+        private test() {
+            var scene = new THREE.Scene();
+			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			this.target.appendChild(renderer.domElement);
+
+			var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+			var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+			var cube = new THREE.Mesh( geometry, material );
+			this.scene.add( cube );
+
+			camera.position.z = 5;
+
+			var animate = function () {
+				requestAnimationFrame( animate );
+
+				cube.rotation.x += 0.01;
+				cube.rotation.y += 0.01;
+
+				renderer.render( scene, camera );
+			};
+
+            animate();
+            return true;
+        }
+
+
         constructor(options: VisualConstructorOptions) {
             console.log('Visual constructor', options);
             this.target = options.element;
             this.host = options.host;
+            // if (this.test()) {
+            //     return;
+            // }
 
             this.scene = new THREE.Scene();
             this.configureCamera();
@@ -102,9 +134,6 @@ module powerbi.extensibility.visual {
                 console.log('OrbitControls enabled');
                 this.controls = new THREE.OrbitControls( this.camera, this.target );
                 this.controls.addEventListener("change", () => {
-                    console.log(`position ${this.camera.position.x} ${this.camera.position.y} ${this.camera.position.z}`);
-                    console.log(`rotation ${this.camera.rotation.x} ${this.camera.rotation.y} ${this.camera.rotation.z}`);
-
                     this.settings.cameraPosition.positionX = this.camera.position.x;
                     this.settings.cameraPosition.positionY = this.camera.position.y;
                     this.settings.cameraPosition.positionZ = this.camera.position.z;
@@ -199,21 +228,19 @@ module powerbi.extensibility.visual {
                 this.create2DLabels(model, Axis.Y);
             }
 
-            let this_ = this;
-            function render() {
+            let render = () => {
                 requestAnimationFrame( render );
-                // this_.controls.update();
-                this_.renderer.render( this_.scene, this_.camera );
-                this_.controls.update();
-            }
+                this.renderer.render( this.scene, this.camera );
+                this.controls.update();
+            };
             render();
         }
 
         private createBar(params: BarMeshParams, includeToScene: boolean = false): THREE.Mesh {
             params.color = params.color || "red";
             params.y = params.y || 0;
+            params.height = params.height || 0.001;
             let boxGeometry = new THREE.BoxGeometry(params.width, params.height, params.depth);
-            boxGeometry.translate(0, 0 , params.depth / 2.0);
             let material = new THREE.MeshLambertMaterial( {
                 color: params.color
             });
@@ -229,7 +256,7 @@ module powerbi.extensibility.visual {
 
         private drawBars(model: Bar3DChartDataModel): void {
             // let bar1 = this.createBar({ width: 1, height: 1, depth: 1, x: 1, y: 1, z: 0, color: "blue" });
-            let scale: d3.scale.Linear<number, number> = d3.scale.linear().domain([0, model.maxLocal]).range([0, BAR_SIZE_HEIGHT]);
+            let scale: d3.scale.Linear<number, number> = d3.scale.linear().domain([model.minLocal, model.maxLocal]).range([0, BAR_SIZE_HEIGHT]);
             model.bars.forEach((bar: Bar3D) => {
                 let barMesh = this.createBar({
                     width: BAR_SIZE,
@@ -264,13 +291,13 @@ module powerbi.extensibility.visual {
         }
 
         private configureLights(): void {
-            let hemiLight = new THREE.HemisphereLight( COLOR_WHITE, COLOR_WHITE, 0.6 );
+            let hemiLight = new THREE.HemisphereLight( new THREE.Color("white"), new THREE.Color("white"), 0.6 );
             hemiLight.color.setHSL( 0.6, 0.75, 0.5 );
             hemiLight.groundColor.setHSL( 0.095, 0.5, 0.5 );
             hemiLight.position.set( 0, 500, 0 );
             this.scene.add( hemiLight );
 
-            let dirLight = new THREE.DirectionalLight( COLOR_WHITE, 1 );
+            let dirLight = new THREE.DirectionalLight( new THREE.Color("white"), 1 );
             dirLight.position.set( 5, -5, 8 );
             dirLight.position.multiplyScalar( 50);
             dirLight.name = "dirlight";
@@ -279,17 +306,17 @@ module powerbi.extensibility.visual {
             this.scene.add( dirLight );
 
             dirLight.castShadow = true;
-            dirLight.shadowMapWidth = dirLight.shadowMapHeight = 1024 * 2;
+            dirLight.shadow.mapSize.width = dirLight.shadow.mapSize.height = 1024 * 2;
 
             let d = 300;
 
-            dirLight.shadowCameraLeft = -d;
-            dirLight.shadowCameraRight = d;
-            dirLight.shadowCameraTop = d;
-            dirLight.shadowCameraBottom = -d;
+            dirLight.shadow.camera.left = -d;
+            dirLight.shadow.camera.right = d;
+            dirLight.shadow.camera.top = d;
+            dirLight.shadow.camera.bottom = -d;
 
-            dirLight.shadowCameraFar = 3500;
-            dirLight.shadowBias = -0.0001;
+            dirLight.shadow.camera.far = 3500;
+            dirLight.shadow.bias = -0.0001;
             // dirLight.shadowDarkness = 0.35;
         }
 
@@ -415,7 +442,7 @@ module powerbi.extensibility.visual {
                     }
                     if (axis === Axis.X) {
                         textMesh.geometry.computeBoundingBox();
-                        let size: THREE.Vector3 = textMesh.geometry.boundingBox.getSize();
+                        let size: THREE.Vector3 = textMesh.geometry.boundingBox.max;
                         textMesh.position.z = BAR_SIZE + labelsShift + size.x;
                         textMesh.position.x = index + (1 - BAR_SIZE) * 2;
                         textMesh.position.y = 0;
