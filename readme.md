@@ -1,7 +1,7 @@
 ## Bar3D Visual
 
 This repository contains the source codes of a static version of the Power BI Custom Visual - 3D Bar Chart by @zBritva
-![Preview](docs/preview.png)
+![Preview](https://github.com/julmoser/3DBarChart/blob/master/preview.PNG)
 
 The visual groups data by two categories and visualizes values by drawing several bars into a 3d scene.
 
