@@ -49,6 +49,8 @@ module powerbi.extensibility.visual {
         rotationZ: number;
     }
 
+
+    
     enum Axis {
         X,
         Y,
@@ -66,7 +68,6 @@ module powerbi.extensibility.visual {
         private renderer: THREE.Renderer;
         private parent3D: THREE.Object3D;
         private colorPalette: IColorPalette;
-
         public static CategoryXIndex: number = 1;
         public static CategoryYIndex: number = 0;
         public static DataViewIndex: number = 0;
@@ -165,12 +166,19 @@ module powerbi.extensibility.visual {
                     console.log(`rotation ${this.camera.rotation.x} ${this.camera.rotation.y} ${this.camera.rotation.z}`);
 
                     this.camera.position.x = 11.962576670319425;
-                    this.camera.position.y = 9.467429465458099;
+                    this.camera.position.y = 11.467429465458099;
                     this.camera.position.z = 12.598031059386222;
+                    /*                     this.camera.position.x =  9.467429465458099;
+                                        this.camera.position.y = 12.598031059386222;
+                                        this.camera.position.z = 11.962576670319425; */
 
-                    this.camera.rotation.x = -0.7709926558827927;
+/*                     this.camera.rotation.x = -0.7709926558827927;
                     this.camera.rotation.y = 0.5536210915662364;
-                    this.camera.rotation.z = 0.47227955182882813;
+                    this.camera.rotation.z = 0.47227955182882813; */
+
+                    this.camera.rotation.x = -0.77;
+                    this.camera.rotation.y = 0.55;
+                    this.camera.rotation.z = 0.47;
                     // for prevent ddosing host
                     if (timeout === 0) {
                         timeout = setTimeout(() => {
@@ -264,29 +272,26 @@ module powerbi.extensibility.visual {
                 this.controls.update();
             };
 
+            /*             //axes
+                        var axes = new THREE.AxesHelper(2);
+                        this.scene.add(axes); */
 
             //grid xz
-            var gridXZ = new THREE.GridHelper(20, 20);
+            let gridXZ = new THREE.GridHelper(20, 20);
             gridXZ.position.set(9.5, 0, 10);
             this.scene.add(gridXZ);
 
             //grid xy
-            var gridXY = new THREE.GridHelper(20, 20);
+            let gridXY = new THREE.GridHelper(20, 20);
             gridXY.rotation.x = Math.PI / 2;
             gridXY.position.set(9.5, 10, 0);
             this.scene.add(gridXY);
 
             //grid yz
-            var gridYZ = new THREE.GridHelper(20, 20);
+            let gridYZ = new THREE.GridHelper(20, 20);
             gridYZ.position.set(-0.5, 10, 10);
             gridYZ.rotation.z = Math.PI / 2;
             this.scene.add(gridYZ);
-
-            //axes
-            var axes = new THREE.AxesHelper(2);
-            this.scene.add(axes);
-
-
 
             render();
         }
@@ -314,11 +319,14 @@ module powerbi.extensibility.visual {
             let scale: d3.scale.Linear<number, number> = d3.scale.linear().domain([0, model.maxLocal]).range([0, BAR_SIZE_HEIGHT]);
             model.bars.forEach((bar: Bar3D) => {
                 let barMesh = this.createBar({
-                    width: BAR_SIZE,
+/*                     width: BAR_SIZE,
                     height: scale(bar.value),
-                    depth: BAR_SIZE,
+                    depth: BAR_SIZE, */
+                    width: 0.5,
+                    height: scale(bar.value),
+                    depth: 0.5,
                     x: bar.x,
-                    z: bar.z,
+                    z: bar.z + 0.25,
                     y: scale(bar.value) / 2,
                     color: bar.color
                 });
@@ -334,6 +342,18 @@ module powerbi.extensibility.visual {
             return deg * Math.PI / 180;
         }
 
+        /*         private configureCamera(): void {
+                    if (!this.camera) {
+                        //this.camera = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
+                        this.camera = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
+                    }
+                    let defaultCameraSettings = new CameraPosition();
+        
+                    let positions = this.settings && this.settings.cameraPosition || defaultCameraSettings;
+                    this.camera.position.set(positions.positionX, positions.positionY, positions.positionZ);
+                    this.camera.rotation.set(positions.rotationX, positions.rotationY, positions.rotationZ);
+                } */
+        //new from here: fixed position
         private configureCamera(): void {
             if (!this.camera) {
                 this.camera = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
@@ -341,19 +361,34 @@ module powerbi.extensibility.visual {
             let defaultCameraSettings = new CameraPosition();
 
             let positions = this.settings && this.settings.cameraPosition || defaultCameraSettings;
-            this.camera.position.set(positions.positionX, positions.positionY, positions.positionZ);
-            this.camera.rotation.set(positions.rotationX, positions.rotationY, positions.rotationZ);
+            this.camera.position.set(11.962576670319425, 11.467429465458099, 12.598031059386222);
+            this.camera.rotation.set(-0.77, 0.55, 0.47);
+            /*  this.camera.position.set(9.467429465458099, 12.598031059386222, 11.962576670319425);
+             this.camera.rotation.set(-0.7709926558827927, 0.5536210915662364, 0.47227955182882813); */
         }
+
+        /*         this.camera.position.x = 11.962576670319425;
+                this.camera.position.y = 9.467429465458099;
+                this.camera.position.z = 12.598031059386222;
+        
+                this.camera.rotation.x = -0.7709926558827927;
+                this.camera.rotation.y = 0.5536210915662364;
+                this.camera.rotation.z = 0.47227955182882813; */
+        //new until here: fixed position
 
         private configureLights(): void {
             let hemiLight = new THREE.HemisphereLight(new THREE.Color("white"), new THREE.Color("white"), 0.6);
             hemiLight.color.setHSL(0.6, 0.75, 0.5);
             hemiLight.groundColor.setHSL(0.095, 0.5, 0.5);
             hemiLight.position.set(0, 500, 0);
+
             this.scene.add(hemiLight);
 
             let dirLight = new THREE.DirectionalLight(new THREE.Color("white"), 1);
-            dirLight.position.set(5, -5, 8);
+/*             dirLight.position.set(5, -5, 8);
+            dirLight.position.multiplyScalar(50);
+            dirLight.name = "dirlight"; */
+            dirLight.position.set(5, 5, 8);
             dirLight.position.multiplyScalar(50);
             dirLight.name = "dirlight";
             // dirLight.shadowCameraVisible = true;
@@ -445,6 +480,8 @@ module powerbi.extensibility.visual {
             };
         }
 
+
+
         private draw2DLine() {
             //create a blue LineBasicMaterial
             let material = new THREE.LineBasicMaterial({ color: 0x0000ff });
@@ -465,13 +502,14 @@ module powerbi.extensibility.visual {
             let labelsShift: number;
             if (axis === Axis.X) {
                 values = category.categoryIndexX;
-                labelsShift = Object.keys(category.categoryIndexY).length * BAR_SIZE;
+                labelsShift = Object.keys(category.categoryIndexY).length * BAR_SIZE + 1.25;
             }
             if (axis === Axis.Y) {
                 values = category.categoryIndexY;
-                labelsShift = Object.keys(category.categoryIndexX).length * BAR_SIZE;
+                labelsShift = Object.keys(category.categoryIndexX).length * BAR_SIZE + 0.9;
             }
-            loader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/helvetiker_regular.typeface.json', (font) => {
+
+            loader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/optimer_regular.typeface.json', (font) => {
                 Object.keys(values).forEach((value: PrimitiveValue, index: number) => {
                     let categoryLabel: THREE.TextGeometry = new THREE.TextGeometry((value || "").toString(), {
                         font: new THREE.Font((<any>font).data),
@@ -481,6 +519,25 @@ module powerbi.extensibility.visual {
                         bevelSize: 1,
                         bevelThickness: 1
                     });
+//new from here
+                    let xLabel = new THREE.TextGeometry( 'Unfallursachen', {
+                        font: new THREE.Font((<any>font).data),
+                        height: 0.0001,
+                        size: BAR_SIZE / 2.1,
+                        bevelEnabled: false,
+                        bevelSize: 1,
+                        bevelThickness: 1
+                    } );
+
+                    let yLabel = new THREE.TextGeometry("Verletzte Körperteile", {
+                        font: new THREE.Font((<any>font).data),
+                        height: 0.0001,
+                        size: BAR_SIZE / 2.1,
+                        bevelEnabled: false,
+                        bevelSize: 1,
+                        bevelThickness: 1
+                    } );
+//new until here
                     let material = new THREE.MeshLambertMaterial({
                         color: "black"
                     });
@@ -495,21 +552,46 @@ module powerbi.extensibility.visual {
                         textMesh.rotation.y = Visual.degRad(-180);
                         this.scene.add(textMesh);
                     }
+
                     if (axis === Axis.X) {
                         textMesh.geometry.computeBoundingBox();
                         let size: THREE.Vector3 = textMesh.geometry.boundingBox.max;
                         textMesh.position.z = BAR_SIZE + labelsShift + size.x;
                         textMesh.position.x = index + (1 - BAR_SIZE) * 2;
                         textMesh.position.y = 0;
-
                         textMesh.rotation.z = Visual.degRad(-90);
                         textMesh.rotation.x = Visual.degRad(90);
                         textMesh.rotation.y = Visual.degRad(180);
                         this.scene.add(textMesh);
                     }
+//new from here
+                    let LabelCategoryY = new THREE.Mesh(yLabel, material);
+                    if (axis === Axis.Y) {
+                        LabelCategoryY.position.x = BAR_SIZE + labelsShift - 0.6;
+                        LabelCategoryY.position.z = (1 - BAR_SIZE) + (BAR_SIZE / 2) + 6.4;
+                        LabelCategoryY.position.y = 0;
+                        LabelCategoryY.rotation.x = Visual.degRad(90);
+                        LabelCategoryY.rotation.z = Visual.degRad(270);
+                        LabelCategoryY.rotation.y = Visual.degRad(-180);
+                        this.scene.add(LabelCategoryY);
+                    }
+                    let LabelCategoryX = new THREE.Mesh(xLabel, material);
+                    if (axis === Axis.X) {
+                        LabelCategoryX.geometry.computeBoundingBox();
+                        let size: THREE.Vector3 = LabelCategoryX.geometry.boundingBox.max;
+                        LabelCategoryX.position.z = BAR_SIZE + labelsShift - 0.5;
+                        LabelCategoryX.position.x = (1 - BAR_SIZE) * 2 + 2.5;
+                        LabelCategoryX.position.y = 0;
+                        LabelCategoryX.rotation.z = Visual.degRad(-180);
+                        LabelCategoryX.rotation.x = Visual.degRad(90);
+                        LabelCategoryX.rotation.y = Visual.degRad(180);
+                        this.scene.add(LabelCategoryX);
+                    }
+//new until here
                     // this.scene.add(textMesh);
                 });
             });
+
         }
 
         /**
